@@ -9,7 +9,9 @@ Can be run as stdio server or TCP server for remote connections.
 
 import argparse
 import asyncio
+import json
 import logging
+import logging.config
 import os
 import re
 import sys
@@ -27,16 +29,46 @@ from mcp.types import (
 )
 
 
-def setup_logging(log_level: str = "INFO") -> logging.Logger:
+def setup_logging(log_level: str = "INFO", config_file: str = None) -> logging.Logger:
     """
     詳細なログ設定を行う
 
     Args:
         log_level: ログレベル (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        config_file: ログ設定ファイルのパス
 
     Returns:
         Logger: 設定されたロガー
     """
+    # ログディレクトリの作成
+    log_dir = "logs"
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir, exist_ok=True)
+
+    # 設定ファイルが指定されている場合は、設定ファイルを使用
+    if config_file and os.path.exists(config_file):
+        try:
+            with open(config_file, "r", encoding="utf-8") as f:
+                config_dict = json.load(f)
+            
+            # ログレベルを設定ファイルの設定で上書き
+            if "loggers" in config_dict and "mcp_file_generator" in config_dict["loggers"]:
+                config_dict["loggers"]["mcp_file_generator"]["level"] = log_level.upper()
+            
+            # コンソールハンドラーのレベルも調整
+            if "handlers" in config_dict and "console" in config_dict["handlers"]:
+                config_dict["handlers"]["console"]["level"] = log_level.upper()
+            
+            logging.config.dictConfig(config_dict)
+            logger = logging.getLogger("mcp_file_generator")
+            logger.info(f"ログ設定ファイルを読み込みました: {config_file}")
+            return logger
+            
+        except Exception as e:
+            print(f"ログ設定ファイルの読み込みに失敗しました: {e}")
+            # フォールバック処理に続行
+    
+    # デフォルトのログ設定
     logger = logging.getLogger("mcp_file_generator")
     logger.setLevel(getattr(logging, log_level.upper()))
 
@@ -45,20 +77,46 @@ def setup_logging(log_level: str = "INFO") -> logging.Logger:
         logger.removeHandler(handler)
 
     # フォーマッターを設定
-    formatter = logging.Formatter(
+    detailed_formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s - %(message)s"
+    )
+    console_formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%H:%M:%S"
     )
 
     # コンソールハンドラー
     console_handler = logging.StreamHandler(sys.stderr)
-    console_handler.setFormatter(formatter)
+    console_handler.setFormatter(console_formatter)
+    console_handler.setLevel(getattr(logging, log_level.upper()))
     logger.addHandler(console_handler)
 
-    # ファイルハンドラー（オプション）
+    # ファイルハンドラー（ローテーション付き）
     try:
-        file_handler = logging.FileHandler("mcp_server.log")
-        file_handler.setFormatter(formatter)
+        from logging.handlers import RotatingFileHandler
+        
+        # メインログファイル
+        file_handler = RotatingFileHandler(
+            os.path.join(log_dir, "mcp_server.log"),
+            maxBytes=10*1024*1024,  # 10MB
+            backupCount=5,
+            encoding="utf-8"
+        )
+        file_handler.setFormatter(detailed_formatter)
+        file_handler.setLevel(logging.DEBUG)
         logger.addHandler(file_handler)
+        
+        # エラーログファイル
+        error_handler = RotatingFileHandler(
+            os.path.join(log_dir, "mcp_server_errors.log"),
+            maxBytes=10*1024*1024,  # 10MB
+            backupCount=5,
+            encoding="utf-8"
+        )
+        error_handler.setFormatter(detailed_formatter)
+        error_handler.setLevel(logging.ERROR)
+        logger.addHandler(error_handler)
+        
     except Exception as e:
         logger.warning(f"ログファイルの作成に失敗しました: {e}")
 
@@ -506,12 +564,17 @@ async def main():
         default="INFO",
         help="ログレベル (デフォルト: INFO)",
     )
+    parser.add_argument(
+        "--log-config",
+        default="logging_config.json",
+        help="ログ設定ファイルのパス (デフォルト: logging_config.json)",
+    )
 
     args = parser.parse_args()
 
     # ログレベルを設定
     global logger
-    logger = setup_logging(args.log_level)
+    logger = setup_logging(args.log_level, args.log_config)
     
     logger.info(f"MCPサーバーを起動中... ログレベル: {args.log_level}")
     logger.debug(f"コマンドライン引数: {args}")
