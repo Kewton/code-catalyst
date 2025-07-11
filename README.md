@@ -2,6 +2,13 @@
 
 Python アプリケーション開発プロジェクト
 
+## セットアップ
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Windowsの場合: .venv\Scripts\activate
+pip install -r requirements.txt
+```
+
 ## 🌿 ブランチ構成
 
 ### 🧱 基本ブランチ
@@ -115,6 +122,20 @@ git merge hotfix/urgent-fix
 
 - Python 3.12以上
 - Git
+
+### プロジェクト構造
+
+```
+code-catalyst/
+├── .github/           # GitHub Actions ワークフロー
+├── mcp_server/        # MCPサーバー実装
+├── tests/             # テストファイル
+├── .gitignore         # Git無視ファイル
+├── LICENSE            # ライセンス
+├── README.md          # プロジェクト説明
+├── pyproject.toml     # プロジェクト設定
+└── requirements.txt   # 依存関係
+```
 
 ### インストール
 

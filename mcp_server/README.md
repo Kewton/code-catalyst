@@ -12,8 +12,21 @@
 
 ### MCPサーバーとして実行
 
+#### 標準入出力モード（デフォルト）
 ```bash
 python server.py
+```
+
+#### リモートTCPサーバーモード
+```bash
+# ローカルホストで起動
+python server.py --host localhost --port 8000
+
+# 特定のIPアドレスで起動
+python server.py --host 192.168.1.100 --port 8000
+
+# 全てのネットワークインターフェースで起動
+python server.py --host 0.0.0.0 --port 8000
 ```
 
 ### ツールの使用
@@ -67,8 +80,9 @@ pip install mcp
 
 ## 設定
 
-Claude DesktopのMCP設定例：
+### Claude DesktopのMCP設定例
 
+#### 標準入出力モード
 ```json
 {
   "mcpServers": {
@@ -79,3 +93,13 @@ Claude DesktopのMCP設定例：
   }
 }
 ```
+
+#### リモートTCPサーバーモード
+TCPサーバーモードを使用する場合は、まずサーバーを起動してから、MCPクライアントで接続します：
+
+```bash
+# サーバーを起動
+python server.py --host localhost --port 8000
+```
+
+TCPサーバーモードでは、WebSocketやSSEを使用したMCPクライアントから接続できます。
