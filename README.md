@@ -120,8 +120,16 @@ git merge hotfix/urgent-fix
 
 ### 前提条件
 
-- Python 3.12以上
-- Git
+- **Python**: 3.12以上
+- **pip**: 最新版
+- **Git**: 最新版
+
+### プラットフォーム対応
+
+Code Catalystは以下のプラットフォームをサポートしています：
+- **macOS**: x64 / ARM64 (Apple Silicon)
+- **Windows**: x64 / ARM64
+- **Linux**: x64 / ARM64
 
 ### プロジェクト構造
 
@@ -129,44 +137,260 @@ git merge hotfix/urgent-fix
 code-catalyst/
 ├── .github/           # GitHub Actions ワークフロー
 ├── mcp_server/        # MCPサーバー実装
+│   ├── server.py      # メインサーバー
+│   ├── standalone.py  # スタンドアローンモード
+│   ├── logging_config.json  # ログ設定
+│   └── logs/          # ログファイル
 ├── tests/             # テストファイル
 ├── .gitignore         # Git無視ファイル
 ├── LICENSE            # ライセンス
 ├── README.md          # プロジェクト説明
+├── CLAUDE.md          # Claude Code開発ガイド
 ├── pyproject.toml     # プロジェクト設定
 └── requirements.txt   # 依存関係
 ```
 
-### インストール
+### インストール手順
 
-```bash
-# リポジトリをクローン
-git clone https://github.com/Kewton/code-catalyst.git
-cd code-catalyst
+1. **リポジトリのクローン**
+   ```bash
+   git clone https://github.com/Kewton/code-catalyst.git
+   cd code-catalyst
+   ```
 
-# 仮想環境の作成
-python -m venv venv
+2. **仮想環境の作成と有効化**
+   ```bash
+   # 仮想環境の作成
+   python -m venv .venv
+   
+   # 仮想環境の有効化
+   # macOS/Linux
+   source .venv/bin/activate
+   # Windows
+   .venv\Scripts\activate
+   ```
 
-# 仮想環境の有効化
-# macOS/Linux
-source venv/bin/activate
-# Windows
-venv\Scripts\activate
+3. **依存関係のインストール**
+   ```bash
+   # 本番依存関係のインストール
+   pip install -r requirements.txt
+   
+   # 開発依存関係のインストール
+   pip install -e ".[dev]"
+   ```
 
-# 依存関係のインストール
-pip install -r requirements.txt
+4. **開発環境の確認**
+   ```bash
+   # コード品質チェック
+   flake8 .
+   black --check .
+   isort --check-only .
+   
+   # セキュリティチェック
+   bandit -r .
+   safety check
+   
+   # テスト実行
+   pytest
+   ```
+
+5. **MCPサーバーの起動**
+   ```bash
+   cd mcp_server
+   python server.py
+   ```
+
+---
+
+## 🔧 開発コマンド
+
+| コマンド | 説明 |
+|---------|------|
+| `python -m pytest` | テストの実行 |
+| `python -m pytest --cov` | カバレッジ付きテスト |
+| `python -m pytest -v` | 詳細出力でテスト |
+| `flake8 .` | Lintチェック |
+| `black .` | コードフォーマット |
+| `black --check .` | フォーマットチェック |
+| `isort .` | インポート文の整理 |
+| `bandit -r .` | セキュリティチェック |
+| `safety check` | 依存関係の脆弱性チェック |
+| `python mcp_server/server.py` | MCPサーバーの起動（stdio） |
+| `python mcp_server/server.py --host 0.0.0.0` | MCPサーバーの起動（TCP） |
+| `python mcp_server/standalone.py` | スタンドアローンモード |
+
+---
+
+## 📝 ログ機能
+
+### 構造化ログシステム
+
+Code Catalystでは、Pythonの標準`logging`モジュールを使用した包括的なログシステムを採用しています。
+
+**主な特徴:**
+- 複数のログレベル（DEBUG, INFO, WARNING, ERROR, CRITICAL）
+- 構造化されたログメッセージ
+- ファイル・コンソールへの出力
+- ログローテーション機能
+- 設定ファイルによるカスタマイズ
+
+**使用例:**
+```python
+import logging
+logger = logging.getLogger("mcp_file_generator")
+
+# 基本的なログ出力
+logger.info('MCPサーバーが起動しました')
+logger.warning('警告メッセージ')
+logger.error('エラーが発生しました', exc_info=True)
+
+# 構造化されたログ
+logger.info('ファイル生成完了', extra={
+    'module': 'file_generator',
+    'action': 'generate_files',
+    'file_count': 5,
+    'processing_time': 1.23
+})
 ```
 
-### テスト実行
+**ログ出力先:**
+- **開発環境**: コンソール + ファイル (`logs/mcp_server.log`)
+- **本番環境**: ファイル (`logs/mcp_server.log`) + エラーファイル (`logs/mcp_server_errors.log`)
+- **ログローテーション**: 10MB毎に自動ローテーション、最大5ファイル保持
+
+### ログ設定
+
+MCPサーバーでは設定ファイル（`logging_config.json`）を使用してログの詳細な設定が可能です。
+
+---
+
+## 📊 コード品質保証戦略
+
+### 1. Flake8設定
+
+**主要ルール:**
+- PEP 8準拠のコードスタイル
+- 未使用変数の検出
+- 複雑度チェック
+- インポート文の検証
+
+**設定例（pyproject.toml）:**
+```toml
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]
+exclude = [".venv", "__pycache__", ".git"]
+```
+
+### 2. Black設定
+
+**フォーマットルール:**
+```toml
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+```
+
+### 3. isort設定
+
+**インポート整理:**
+```toml
+[tool.isort]
+profile = "black"
+line_length = 88
+```
+
+### 4. 開発ワークフロー
 
 ```bash
-# テストの実行
-pytest
+# 開発前のコード品質チェック
+flake8 . && black --check . && isort --check-only . && pytest
 
-# Lintの実行
+# 自動修正とフォーマット
+black . && isort .
+
+# プルリクエスト前の最終チェック
+flake8 . && black --check . && isort --check-only . && pytest && bandit -r .
+```
+
+---
+
+## 🧪 テスト戦略
+
+### テストフレームワーク
+
+- **pytest**: テストランナーとアサーション
+- **pytest-cov**: カバレッジ測定
+- **pytest-mock**: モック機能
+
+### テスト構成
+
+#### 1. 単体テスト (Unit Tests)
+
+**対象範囲:**
+- MCPサーバーの各機能
+- ファイル生成ロジック
+- ユーティリティ関数
+
+**例:**
+```python
+# tests/test_file_generator.py
+def test_parse_markdown_sections():
+    """Markdownセクションの解析をテスト"""
+    sample_md = """
+    ## ./test.py
+    ### ./test.py
+    ```python
+    def hello():
+        return "Hello, World!"
+    ```
+    """
+    result = parse_input_md_sections(sample_md)
+    assert len(result) == 1
+    assert result[0]['filepath'] == 'test.py'
+```
+
+#### 2. 統合テスト (Integration Tests)
+
+**対象範囲:**
+- MCPサーバーの起動・停止
+- ファイル生成の統合フロー
+- ログ出力の検証
+
+#### 3. 機能テスト (Functional Tests)
+
+**対象範囲:**
+- エンドツーエンドのファイル生成
+- リモートTCPサーバー接続
+- エラーハンドリング
+
+**テストカバレッジ目標:**
+- **ライン カバレッジ**: 80%以上
+- **ブランチ カバレッジ**: 75%以上
+- **関数 カバレッジ**: 90%以上
+
+### テスト実行環境
+
+```toml
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "--cov=mcp_server --cov-report=html --cov-report=term-missing"
+```
+
+### CI/CD統合
+
+```bash
+# GitHub Actions等での実行例
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+pip install -e ".[dev]"
 flake8 .
-
-# セキュリティチェック
+black --check .
+isort --check-only .
+pytest --cov
 bandit -r .
 safety check
 ```

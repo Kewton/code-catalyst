@@ -61,7 +61,8 @@ def parse_input_md_sections(md_content):
 
         if filepath_header_pos == -1:
             print(
-                f"警告: ファイル '{current_filepath}' のコンテンツ開始マーカー '{filepath_header_marker}' が見つかりません。このファイルは作成されません。"
+                f"警告: ファイル '{current_filepath}' のコンテンツ開始マーカー "
+                f"'{filepath_header_marker}' が見つかりません。このファイルは作成されません。"
             )
             continue
 
@@ -89,7 +90,8 @@ def parse_input_md_sections(md_content):
             # コードブロックが見つからない場合、警告を出力してスキップ
             # `## ./` の形式でも、コードブロックがなければファイルは作成しない方針を維持
             print(
-                f"警告: ファイル '{current_filepath}' のコンテンツブロックが見つからないか、形式が不正です。このファイルは作成されません。"
+                f"警告: ファイル '{current_filepath}' のコンテンツブロックが"
+                "見つからないか、形式が不正です。このファイルは作成されません。"
             )
             continue  # コードブロックが見つからない場合はスキップ
 
@@ -135,7 +137,7 @@ def create_files_from_parsed_data(parsed_data, base_dir="."):
             print("ファイルを作成/更新しました")
             print(f"{filepath}")
             if file_info.get("change_description"):
-                print(f"## 変更内容")
+                print("## 変更内容")
                 print(f"{file_info['change_description']}")
                 print("___")
         except IOError as e:

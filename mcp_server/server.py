@@ -50,24 +50,29 @@ def setup_logging(log_level: str = "INFO", config_file: str = None) -> logging.L
         try:
             with open(config_file, "r", encoding="utf-8") as f:
                 config_dict = json.load(f)
-            
+
             # ログレベルを設定ファイルの設定で上書き
-            if "loggers" in config_dict and "mcp_file_generator" in config_dict["loggers"]:
-                config_dict["loggers"]["mcp_file_generator"]["level"] = log_level.upper()
-            
+            if (
+                "loggers" in config_dict
+                and "mcp_file_generator" in config_dict["loggers"]
+            ):
+                config_dict["loggers"]["mcp_file_generator"][
+                    "level"
+                ] = log_level.upper()
+
             # コンソールハンドラーのレベルも調整
             if "handlers" in config_dict and "console" in config_dict["handlers"]:
                 config_dict["handlers"]["console"]["level"] = log_level.upper()
-            
+
             logging.config.dictConfig(config_dict)
             logger = logging.getLogger("mcp_file_generator")
             logger.info(f"ログ設定ファイルを読み込みました: {config_file}")
             return logger
-            
+
         except Exception as e:
             print(f"ログ設定ファイルの読み込みに失敗しました: {e}")
             # フォールバック処理に続行
-    
+
     # デフォルトのログ設定
     logger = logging.getLogger("mcp_file_generator")
     logger.setLevel(getattr(logging, log_level.upper()))
@@ -78,11 +83,11 @@ def setup_logging(log_level: str = "INFO", config_file: str = None) -> logging.L
 
     # フォーマッターを設定
     detailed_formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s - %(message)s"
+        "%(asctime)s - %(name)s - %(levelname)s - "
+        "%(filename)s:%(lineno)d - %(funcName)s - %(message)s"
     )
     console_formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        datefmt="%H:%M:%S"
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s", datefmt="%H:%M:%S"
     )
 
     # コンソールハンドラー
@@ -94,29 +99,29 @@ def setup_logging(log_level: str = "INFO", config_file: str = None) -> logging.L
     # ファイルハンドラー（ローテーション付き）
     try:
         from logging.handlers import RotatingFileHandler
-        
+
         # メインログファイル
         file_handler = RotatingFileHandler(
             os.path.join(log_dir, "mcp_server.log"),
-            maxBytes=10*1024*1024,  # 10MB
+            maxBytes=10 * 1024 * 1024,  # 10MB
             backupCount=5,
-            encoding="utf-8"
+            encoding="utf-8",
         )
         file_handler.setFormatter(detailed_formatter)
         file_handler.setLevel(logging.DEBUG)
         logger.addHandler(file_handler)
-        
+
         # エラーログファイル
         error_handler = RotatingFileHandler(
             os.path.join(log_dir, "mcp_server_errors.log"),
-            maxBytes=10*1024*1024,  # 10MB
+            maxBytes=10 * 1024 * 1024,  # 10MB
             backupCount=5,
-            encoding="utf-8"
+            encoding="utf-8",
         )
         error_handler.setFormatter(detailed_formatter)
         error_handler.setLevel(logging.ERROR)
         logger.addHandler(error_handler)
-        
+
     except Exception as e:
         logger.warning(f"ログファイルの作成に失敗しました: {e}")
 
@@ -169,7 +174,7 @@ async def handle_call_tool(
     """
     logger.info(f"ツール実行要求: {name}")
     logger.debug(f"引数: {arguments}")
-    
+
     if name != "generate_files_from_markdown":
         error_msg = f"Unknown tool: {name}"
         logger.error(error_msg)
@@ -222,7 +227,7 @@ def parse_input_md_sections(md_content: str) -> List[Dict[str, str]]:
     """
     logger.info("Markdownコンテンツの解析を開始")
     logger.debug(f"入力コンテンツサイズ: {len(md_content)} 文字")
-    
+
     files_to_create = []
 
     # 全体のMarkdownコンテンツを、ファイル定義セクションとそれ以外のセクションに分割
@@ -340,7 +345,7 @@ def create_files_from_parsed_data(
     logger.info("ファイル作成処理を開始")
     logger.debug(f"ベースディレクトリ: {base_dir}")
     logger.debug(f"作成対象ファイル数: {len(parsed_data)}")
-    
+
     if not parsed_data:
         logger.warning("作成するファイルがありません")
         return "作成するファイルがありません。"
@@ -371,10 +376,10 @@ def create_files_from_parsed_data(
         try:
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(content)
-            
+
             logger.info(f"ファイル作成成功: {filepath}")
             created_files += 1
-            
+
             results.append(f"# {file_info['filepath']}")
             results.append("ファイルを作成/更新しました")
             results.append(f"{filepath}")
@@ -382,7 +387,7 @@ def create_files_from_parsed_data(
                 results.append("## 変更内容")
                 results.append(f"{file_info['change_description']}")
                 results.append("___")
-                
+
         except IOError as e:
             error_msg = f"ファイル '{filepath}' の書き込み中にエラーが発生しました: {e}"
             logger.error(error_msg)
@@ -408,7 +413,7 @@ async def generate_files_from_markdown(
     """
     start_time = datetime.now()
     logger.info(f"ファイル生成処理を開始: {input_file_path} -> {root_directory}")
-    
+
     try:
         # 入力ファイルの存在確認
         logger.debug(f"入力ファイルの存在確認: {input_file_path}")
@@ -441,7 +446,9 @@ async def generate_files_from_markdown(
         parsed_files = parse_input_md_sections(md_content)
 
         if not parsed_files:
-            error_msg = f"'{input_file_path}' からファイル情報が正常に解析されませんでした。"
+            error_msg = (
+                f"'{input_file_path}' からファイル情報が正常に解析されませんでした。"
+            )
             logger.error(error_msg)
             return error_msg
 
@@ -502,9 +509,9 @@ async def run_tcp_server(host: str = "localhost", port: int = 8000):
         """
         クライアント接続を処理
         """
-        client_addr = writer.get_extra_info('peername')
+        client_addr = writer.get_extra_info("peername")
         logger.info(f"クライアント接続: {client_addr}")
-        
+
         try:
             await server.run(
                 reader,
@@ -519,7 +526,9 @@ async def run_tcp_server(host: str = "localhost", port: int = 8000):
                 ),
             )
         except Exception as e:
-            logger.error(f"クライアント接続エラー: {client_addr}, エラー: {e}", exc_info=True)
+            logger.error(
+                f"クライアント接続エラー: {client_addr}, エラー: {e}", exc_info=True
+            )
             print(f"クライアント接続エラー: {e}")
         finally:
             logger.info(f"クライアント接続を終了: {client_addr}")
@@ -575,7 +584,7 @@ async def main():
     # ログレベルを設定
     global logger
     logger = setup_logging(args.log_level, args.log_config)
-    
+
     logger.info(f"MCPサーバーを起動中... ログレベル: {args.log_level}")
     logger.debug(f"コマンドライン引数: {args}")
 
