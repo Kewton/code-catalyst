@@ -285,7 +285,7 @@ def parse_input_md_sections(md_content: str) -> List[Dict[str, str]]:
         # ヘッダー以降の文字列 (コンテンツ候補)
         # ヘッダーの終端からセクションの終わりまで
         content_candidate = section_block[
-            filepath_header_pos + len(filepath_header_marker) :
+            filepath_header_pos + len(filepath_header_marker):
         ].strip()
         logger.debug(f"コンテンツ候補サイズ: {len(content_candidate)} 文字")
 
