@@ -1,0 +1,14 @@
+{
+  "name": "file-generator-mcp",
+  "version": "1.0.0",
+  "description": "MCP Server for generating files from structured markdown content",
+  "main": "server.py",
+  "scripts": {
+    "start": "python server.py"
+  },
+  "dependencies": {
+    "mcp": ">=0.5.0"
+  },
+  "author": "Kewton",
+  "license": "MIT"
+}

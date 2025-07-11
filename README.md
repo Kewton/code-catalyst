@@ -161,3 +161,40 @@ safety check
 ## 📄 ライセンス
 
 このプロジェクトは MIT ライセンスの下で公開されています。詳細は `LICENSE` ファイルをご覧ください。
+
+## 🤖 MCP Server
+
+このプロジェクトには、構造化されたMarkdownファイルからファイルを生成するためのMCPサーバーが含まれています。
+
+### 機能
+
+- Markdownファイルから複数のファイルを一括生成
+- AIエージェントからのリモート実行
+- ファイル構造とコンテンツの自動管理
+
+### 使用方法
+
+MCPサーバーは `mcp_server/` ディレクトリにあります。
+
+```bash
+# MCPサーバーの起動
+cd mcp_server
+python server.py
+
+# スタンドアロンでの実行（テスト用）
+python standalone.py input.md -d output_directory
+```
+
+### MCPクライアントからの使用
+
+```json
+{
+  "name": "generate_files_from_markdown",
+  "arguments": {
+    "input_file_path": "/path/to/input.md",
+    "root_directory": "/path/to/output"
+  }
+}
+```
+
+詳細は `mcp_server/README.md` をご参照ください。
