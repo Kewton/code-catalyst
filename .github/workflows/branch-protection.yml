@@ -1,0 +1,54 @@
+name: Branch Protection Setup
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'setup'
+        type: choice
+        options:
+        - setup
+        - verify
+
+jobs:
+  branch-protection:
+    name: Configure Branch Protection
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.actor == github.repository_owner
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Branch Protection Rules
+      run: |
+        echo "Branch protection rules should be configured manually via GitHub Settings:"
+        echo ""
+        echo "Settings > Branches > Add rule:"
+        echo "1. Branch name pattern: main"
+        echo "   - Require pull request reviews before merging: ✓"
+        echo "   - Require status checks to pass before merging: ✓"
+        echo "   - Require branches to be up to date before merging: ✓"
+        echo "   - Required status checks: quality-check, build-check"
+        echo "   - Restrict pushes that create matching branches: ✓"
+        echo ""
+        echo "2. Branch name pattern: staging"
+        echo "   - Require pull request reviews before merging: ✓"
+        echo "   - Require status checks to pass before merging: ✓"
+        echo "   - Required status checks: quality-check, build-check"
+        echo ""
+        echo "3. Branch name pattern: release/*"
+        echo "   - Require pull request reviews before merging: ✓"
+        echo "   - Require status checks to pass before merging: ✓"
+        echo "   - Required status checks: quality-check, build-check"
+        echo ""
+        echo "Manual configuration is required as this ensures proper security settings."
+
+    - name: Verify Protection Status
+      if: github.event.inputs.action == 'verify'
+      run: |
+        echo "Branch protection verification:"
+        echo "- This workflow runs only on main branch"
+        echo "- Repository owner privileges required"
+        echo "- Manual verification recommended via GitHub Settings"
